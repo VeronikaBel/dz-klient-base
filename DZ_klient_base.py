@@ -44,9 +44,12 @@ def add_phone(conn, client_id, phone):
 
 def change_client(conn, client_id, first_name=None, last_name=None, email=None, phones=None):
   cur = conn.cursor()
-  cur.execute("""
-              UPDATE Clients SET first_name = %s, last_name = %s, email = %s, phones = %s WHERE id = %s;
-              """)
+  arg_list = {first_name:first_name, last_name:last_name, email:email, phones:phones}
+  for key, value in arg_list.items():
+    if value is not None:
+      cur.execute("""
+                  UPDATE Clients SET {} = %s WHERE id = %s;
+                  """.format(key), (value, client_id))
   conn.commit()
   print ("Клиент изменен")
   pass
@@ -72,21 +75,34 @@ def delete_client(conn, client_id):
   conn.commmit()
   print ("Клиент удален")
 
-def find_client(cur, first_name: str, last_name: str, email: str, phone: str):
-  cur = conn.cursor()
-  cur.execute("""
-              SELECT id FROM Clients WHERE first_name = %s OR last_name = %s OR email = %s OR phone = %s;
-              """, (first_name, last_name, email, phone))
-  print (cur.fetchone())
+def find_client(cur, first_name, last_name, email = None, phone = None):
+  if first_name is not None:
+    cur.execute("""
+                SELECT * FROM Clients WHERE first_name = %s;
+                """, (first_name,))
+  if last_name is not None:
+    cur.execute("""
+                SELECT * FROM Clients WHERE last_name = %s;
+                """, (last_name,))
+  if email is not None:
+    cur.execute("""
+                SELECT * FROM Clients WHERE email = %s;
+                """, (email,))
+  if phone is not None:
+    cur.execute("""
+                SELECT * FROM Clients WHERE phone = %s;
+                """, (phone,))
+  print (cur.fetchall())
 
 
 with psycopg2.connect(database="clients_db", user="postgres", password="postgres") as conn:
-  
-  create_db(conn)
-  add_client(conn, "Сергей", "Иванов")
-  add_phone(conn, 5, "89435667895")
-  change_client(conn, 5, "Сергей", "Иванов", "qpmzj@example.com", "89116784356")
-  delete_phone(conn, 5, "89115784356")
-  delete_client(conn, 5)
-  find_client(conn, "Сергей", "Иванов", "qpmzj@example.com", "89116784356")
-  
+            
+  if __name__ == '__main__':
+              
+    create_db(conn)
+    add_client(conn, "Сергей", "Иванов")
+    add_phone(conn, 5, "89435667895")
+    change_client(conn, 5, "Сергей", "Иванов", "qpmzj@example.com", "89116784356")
+    delete_phone(conn, 5, "89115784356")
+    delete_client(conn, 5)
+    find_client(conn, "Сергей", "Иванов", "qpmzj@example.com", "89116784356")
